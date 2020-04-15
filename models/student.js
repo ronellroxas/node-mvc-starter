@@ -15,4 +15,59 @@ const studentSchema = new mongoose.Schema({
   }
 );
 
-module.exports = mongoose.model('students', studentSchema);
+const studentModel = mongoose.model('students', studentSchema);
+
+module.exports = {
+  getAll: function(sort, next) {
+      studentModel.find({}).sort({ name: 1 }).exec(function(err, result) {
+      var studentObjects = [];
+
+        result.forEach(function(doc) {
+          studentObjects.push(doc.toObject());
+        });
+
+      next(studentObjects);
+    });
+  },
+  create: function(name, id, img) {
+    var student = new studentModel({
+      name: name,
+      id: id,
+      img: img
+    });
+
+    return student;
+  },
+  add: function(student, next) {
+    student.save(function(err, student) {
+      var result;
+  
+      if (err) {
+        console.log(err.errors);
+  
+        result = { success: false, message: "Student was not created!" }
+        res.send(result);
+      } else {
+        console.log("Successfully added student!");
+        console.log(student);
+  
+        result = { success: true, message: "Student created!" }
+  
+        next(result);
+      }
+    });
+  },
+  query: function(query, next) {
+    studentModel.find(query, function(err, students) {
+      if(err) throw err;
+      next(students);
+    });
+  },
+  update: function(query, update, next) {
+    studentModel.findOneAndUpdate(query, update, { new: true }, function(err, user) {
+      if (err) throw err;
+      console.log(user);
+      next(user);
+    });
+  }
+}
